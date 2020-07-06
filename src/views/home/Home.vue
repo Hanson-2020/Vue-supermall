@@ -30,7 +30,7 @@
 <script>
 import { getHomeMultiadata, getHomeGoods } from "network/home";
 import { debounce } from "common/utils";
-import {itemListenerMixin } from 'common/mixin'
+import {itemListenerMixin, backTopMixin } from 'common/mixin'
 import HomeSwiper from "./childComps/HomeSwiper";
 import HomeRecommendView from "./childComps/HomeRecommendView.vue";
 import Featureview from "./childComps/Featureview.vue";
@@ -39,11 +39,11 @@ import NavBar from "components/common/navbar/NavBar.vue";
 import TabControl from "components/content/tabControl/TabControl.vue";
 import GoodsList from "components/content/goods/GoodsList.vue";
 import Scroll from "components/common/scroll/Scroll.vue";
-import BackTop from "components/content/backTop/BackTop.vue";
+// import BackTop from "components/content/backTop/BackTop.vue";
 
 export default {
   name: "Home",
-  mixins: [itemListenerMixin],
+  mixins: [itemListenerMixin, backTopMixin],
   components: {
     HomeSwiper,
     HomeRecommendView,
@@ -52,7 +52,7 @@ export default {
     TabControl,
     GoodsList,
     Scroll,
-    BackTop
+    // BackTop
   },
   data() {
     return {
@@ -64,7 +64,7 @@ export default {
         sell: { page: 0, list: [] }
       },
       currentType: "pop",
-      isShowBackTop: false,
+      // isShowBackTop: false,
       tabOffsetTop: 622,
       isTabFixed: false,
       saveY: 0,
@@ -105,7 +105,6 @@ export default {
   deactivated() {
     // 1.保存Y值
     this.saveY = this.$refs.scroll.getScrollY();
-    // console.log(this.saveY);
 
     // 2.取消全局事件的监听
     this.$bus.$off("itemImageLoad", this.homeItemListener);
@@ -130,16 +129,13 @@ export default {
         this.$refs.tabcontrol1.currentType = index;
       }
     },
-    //回到顶部按钮事件
-    backClick() {
-      // console.log("---");
-      this.$refs.scroll.scrollTo(0, 0);
-    },
+    //回到顶部按钮事件,mixin里
+    // backClick()
+
     //判断返回图标的显示
     scrollPosition(position) {
-      // console.log(position);
-      // 1.判断BackTop是否显示
-      this.isShowBackTop = -position.y > 1000;
+      // 1.判断BackTop是否显示,mixin里
+      this.listenShowBackClick(position)
       // 2.决定tabControl是否吸顶
       this.isTabFixed = -position.y > this.tabOffsetTop;
     },
@@ -150,13 +146,11 @@ export default {
     },
     swiperImageLoad() {
       this.tabOffsetTop = this.$refs.tabcontrol2.$el.offsetTop;
-      // console.log(this.$refs.tabcontrol2.$el.offsetTop);
     },
 
     // 网络请求相关的方法
     getHomeMultiadata() {
       getHomeMultiadata().then(res => {
-        // console.log(res);
         //函数变量会被释放，所以要保存起来
         this.banners = res.data.banner.list;
         this.recommends = res.data.recommend.list;

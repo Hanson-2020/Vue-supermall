@@ -1,7 +1,6 @@
 <template>
   <div class="wrapper" ref="aaaa">
     <ul class="content">
-      <button @click="btnClick">按钮</button>
       <li>list1</li>
       <li>list2</li>
       <li>list3</li>
@@ -203,12 +202,15 @@
       <li>list 99</li>
       <li>list 100</li>
     </ul>
+    <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
   </div>
 </template>
 <script>
 import BScroll from "better-scroll";
+import {backTopMixin } from 'common/mixin'
 export default {
   name: "CateGory",
+  mixins:[backTopMixin],
   data() {
     return {
       scroll: null
@@ -225,7 +227,7 @@ export default {
     });
 
     this.scroll.on('scroll', (postition) => {
-      console.log(postition);
+      // console.log(postition);
     })
 
     this.scroll.on('pullingUp', () => {
@@ -242,7 +244,7 @@ export default {
 <style scoped>
 .wrapper {
   height: 500px;
-  background: yellow;
+  /* background: yellow; */
   overflow: hidden;
   /* overflow-y: scroll;  */
   /* 设置这个属性的时候会自动给你隐藏，所以hidden就没必要了。 */

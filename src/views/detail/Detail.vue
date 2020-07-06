@@ -10,7 +10,9 @@
       <detail-comment-info :commer-info="commerInfo" ref="comment"></detail-comment-info>
       <goods-list :goods="recommend" ref="recomment"></goods-list>
     </scroll>
+    <detail-bottom-bar @addToCart="addToCart"></detail-bottom-bar>
     <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
+    <!-- <toast :show="show" :message="message"></toast> -->
   </div>
 </template>
 <script>
@@ -22,7 +24,9 @@ import {
   GoodsParam
 } from "network/detail";
 import { debounce } from "common/utils";
-import { itemListenerMixin } from "common/mixin";
+import { itemListenerMixin, backTopMixin } from "common/mixin";
+import { mapActions } from 'vuex';
+// import Toast from 'components/common/toast/Toast'
 import DetailNavBar from "./childComps/DetailNavBar.vue";
 import DetailSwiper from "./childComps/DetailSwiper.vue";
 import DetailBaseInfo from "./childComps/DetailBaseInfo.vue";
@@ -32,10 +36,11 @@ import DetailGoodsInfo from "./childComps/DetailGoodsInfo.vue";
 import DetailParamInfo from "./childComps/DetailParamInfo";
 import DetailCommentInfo from "./childComps/DetailCommentInfo.vue";
 import GoodsList from "../../components/content/goods/GoodsList";
-import BackTop from "components/content/backTop/BackTop.vue";
+import DetailBottomBar from "./childComps/DetailBottomBar";
+// import BackTop from "components/content/backTop/BackTop.vue";
 export default {
   name: "Detail",
-  mixins: [itemListenerMixin],
+  mixins: [itemListenerMixin, backTopMixin],
   data() {
     return {
       iid: null,
@@ -46,10 +51,12 @@ export default {
       paramInfo: {},
       commerInfo: {},
       recommend: [],
-      isShowBackTop: false,
+      // isShowBackTop: false,
       themeTopYs: [],
       getThemeTopY: null,
-      currentIndex: 0
+      currentIndex: 0,
+      // show: false,
+      // message: ""
     };
   },
   components: {
@@ -62,12 +69,14 @@ export default {
     DetailParamInfo,
     DetailCommentInfo,
     GoodsList,
-    BackTop
+    DetailBottomBar,
+    // Toast
+    // BackTop
   },
   created() {
-    // 1.保存传入的iid
+    // 一.保存传入的iid
     this.iid = this.$route.params.iid;
-    // 2.根据请求过来的iid获取数据
+    // 二.根据请求过来的iid获取数据
     getDetail(this.iid).then(res => {
       console.log(res);
       // 1.获取轮播图的数据
@@ -92,81 +101,87 @@ export default {
       if (data.rate.cRate != null) {
         this.commerInfo = data.rate.list[0];
       }
-      // this.$nextTick(() => {
-      //   this.themeTopYs = [];
-      //   this.themeTopYs.push(0);
-      //   this.themeTopYs.push(this.$refs.params.$el.offsetTop);
-      //   this.themeTopYs.push(this.$refs.comment.$el.offsetTop);
-      //   this.themeTopYs.push(this.$refs.recomment.$el.offsetTop);
-      //   // console.log(this.themeTopYs);
-      // });
     });
-    // 3.推荐的数据
+    // 三.推荐的数据
     getRecommend().then(res => {
       this.recommend = res.data.list;
     });
 
-    // 4.给getThiemeTopY赋值
+    // 四.给getThiemeTopY赋值，获取位置
     this.getThemeTopY = debounce(() => {
       this.themeTopYs = [];
       this.themeTopYs.push(0);
       this.themeTopYs.push(this.$refs.params.$el.offsetTop);
       this.themeTopYs.push(this.$refs.comment.$el.offsetTop);
       this.themeTopYs.push(this.$refs.recomment.$el.offsetTop);
+      this.themeTopYs.push(Number.MAX_VALUE);
       console.log(this.themeTopYs);
     });
   },
   methods: {
+    ...mapActions(['addCart']),
     imageLoad() {
-      // console.log('--');
       this.refresh();
-      // this.$refs.scroll.refresh();
       this.getThemeTopY();
     },
-    backClick() {
-      // console.log("---");
-      this.$refs.scroll.scrollTo(0, 0);
-    },
+    //封装到mixin去了
+    // backClick()
+
+    //滚动相关操作
     scrollPosition(position) {
       // 1.获取y值
       const positoinY = -position.y;
-      // 2.postitionY和主题中的值进行对比
-      // for(let i in this.themeTopYs) {
-      //   if(positoinY > this.themeTopYs[parseInt(i)] && positoinY < this.themeTopYs[i+1]){
-      //     console.log(i);
-      //   } 
-      // }
-      let lenght = this.themeTopYs.length
-      for(let i = 0; i< this.themeTopYs.length;i++){
-        // if(positoinY > this.themeTopYs[i] && positoinY < this.themeTopYs[i+1]){
-        //   console.log(i);
-        // } 
-        if(this.currentIndex !== i && ((i < lenght - 1 && positoinY >= this.themeTopYs[i] && positoinY < this.themeTopYs[i+1]) ||
-         (i === lenght -1 && positoinY >= this.themeTopYs[i]))){
-          //  console.log(i);
+      let lenght = this.themeTopYs.length;
+      for (let i = 0; i < lenght - 1; i++) {
+        if (
+          this.currentIndex !== i &&
+          positoinY >= this.themeTopYs[i] && positoinY < this.themeTopYs[i + 1]
+        ) {
           this.currentIndex = i;
-          console.log(this.currentIndex);
           this.$refs.nav.currentIndex = this.currentIndex;
-         }
+        }
       }
-      this.isShowBackTop = -position.y > 1000;
+      //按钮是否显示的判断,方法在mixin里
+      this.listenShowBackClick(position);
+      // this.isShowBackTop = -position.y > 1000;
     },
+    //根据navbar点击的索引回到位置
     btnClick(index) {
-      // console.log(index);
       this.$refs.scroll.scrollTo(0, -this.themeTopYs[index], 300);
+    },
+    addToCart() {
+      // console.log('------')
+      // 1.获取购物车需要展示的信息
+      const product = {};
+      product.image = this.topImages[0];
+      product.title = this.goods.title;
+      product.desc = this.goods.desc;
+      product.price = this.goods.realPrice;
+      product.iid = this.iid;
+      //将商品添加到购物车里边
+      // this.$store.cartList.push(product);
+      // this.$store.dispatch("addCart", product).then(res => {
+      //   console.log(res)
+      // })
+      this.addCart(product).then(res => {
+        // this.show = true;
+        // this.message = res;
+        // setTimeout(() => {
+        //   this.show = false;
+        //   this.message = "";
+        // },1500) 
+        // console.log(res)
+        // console.log('111')
+        this.$toast.show(res, 2000)
+      })
     }
   },
   mounted() {
     //封装到mixin去了
     // const refresh = debounce(this.$refs.scroll.refresh, 50);
-    // this.itemListener = () => {
-    //   refresh();
-    // };
-    // this.$bus.$on("itemImageLoad", this.itemListener);
   },
   destroyed() {
     this.$bus.$off("itemImageLoad", this.itemListener);
-    // console.log("deac");
   }
 };
 </script>
@@ -181,7 +196,7 @@ export default {
   position: absolute;
   top: 44px;
   left: 0;
-  bottom: 10px;
+  bottom: 64px;
   overflow: hidden;
 }
 .detail-nv {
