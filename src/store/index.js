@@ -17,8 +17,15 @@ const store = new Vuex.Store({
     addToCart(state, payload) {
       payload.checked = true
       state.cartList.push(payload)
+    },
+    desCounts(state, payload) {
+      if (payload.cartList.count > 1) {
+        payload.cartList.count--;
+      }
+    },
+    addCounts(state, payload) {
+      payload.cartList.count++;
     }
-
   },
   actions: {
     //detail传过来的值
@@ -44,8 +51,13 @@ const store = new Vuex.Store({
           resolve('加入购物车成功')
         }
       })
-
-    }
+    },
+    addCartListCount(context, payload) {
+      context.commit('addCounts', payload);
+    },
+    desCartListCount(context, payload) {
+      context.commit('desCounts', payload);
+    },
   },
   modules: {},
   getters
