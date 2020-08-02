@@ -20,8 +20,8 @@ const routes = [{
     component: () => import("../views/cart/Cart.vue")
   },
   {
-    path: '/profile',
-    component: () => import("../views/profile/ProFile.vue")
+    path: '/cate',
+    component: () => import("../views/category/cate.vue")
   },
   {
     path: '/detail/:iid',

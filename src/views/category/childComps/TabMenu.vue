@@ -29,8 +29,8 @@ export default {
   methods: {
     tabMenuClick(index){
       this.currentIndex = index;
-      console.log(index)
-      console.log(this.currentIndex)
+      // console.log(index)
+      // console.log(this.currentIndex)
       this.$emit('selectItem', index)
     }
   }
@@ -42,15 +42,14 @@ export default {
     height: 100%;
     width: 110px;
     box-sizing: border-box;
+    z-index: 99;
   }
-
   .menu-list-item {
     height: 45px;
     line-height:45px;
     text-align: center;
     font-size: 14px;
   }
-
   .active {
     font-weight: 700;
     color: var(--color-high-text);
